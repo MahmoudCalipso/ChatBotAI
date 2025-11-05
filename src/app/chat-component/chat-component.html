@@ -1,0 +1,195 @@
+<div class="chat-container">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.closed]="!sidebarOpen">
+    <div class="sidebar-header">
+      <h2>Your Copilot for Invoices</h2>
+      <button class="new-chat-btn" (click)="createNewChat()">New Chat</button>
+    </div>
+
+    <div class="chat-history">
+      <div *ngFor="let session of chatSessions"
+           class="chat-history-item"
+           [class.active]="currentSession?.id === session.id"
+           (click)="selectSession(session)">
+        <div class="chat-info">
+          <div class="chat-title">{{ session.title }}</div>
+          <div class="chat-preview">{{ session.lastMessage || 'New conversation' }}</div>
+        </div>
+        <div class="chat-meta">
+          <span class="chat-time">{{ formatTime(session.timestamp) }}</span>
+          <button class="delete-btn" (click)="deleteSession(session, $event)">Delete</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Chat -->
+  <main class="chat-main">
+    <header class="chat-header">
+      <button class="toggle-sidebar-btn" (click)="toggleSidebar()">☰</button>
+      <h1>{{ currentSession?.title || 'Invoice Assistant' }}</h1>
+
+<!--      <div style="margin-left:auto; display:flex; gap:8px;">-->
+<!--        <button class="new-chat-btn" (click)="exportCurrentSession()">Download JSON</button>-->
+<!--      </div>-->
+    </header>
+
+    <div class="messages-container">
+      <div *ngFor="let message of currentSession?.messages"
+           class="message"
+           [class.user]="message.isUser"
+           [class.bot]="!message.isUser">
+        <div class="message-avatar">
+          <span *ngIf="message.isUser">👤</span>
+          <span *ngIf="!message.isUser">🤖</span>
+        </div>
+
+        <div class="message-content">
+          <div class="message-text" [innerHTML]="message.text | sanitize"></div>
+
+          <div *ngIf="message.fileAttachment" class="file-attachment">
+            <span>{{ message.fileAttachment.name }}</span>
+            <button (click)="downloadAttachment(currentSession!.id, message.fileAttachment.name)">Download</button>
+          </div>
+
+          <span class="message-time">{{ formatTime(message.timestamp) }}</span>
+        </div>
+      </div>
+
+      <!-- OCR Loading -->
+      <div *ngIf="isProcessing" class="message bot">
+        <div class="message-avatar">🤖</div>
+        <div class="message-content">
+          <div class="typing-indicator">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="ocr-progress" *ngIf="ocrProgress > 0">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="ocrProgress"></div>
+            </div>
+            <span class="progress-text">{{ ocrProgress }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-container">
+      <div class="input-wrapper">
+        <input type="file" #fileInput style="display:none"
+               (change)="onFileSelect($event)"
+               accept=".jpg,.jpeg,.png,.pdf,.txt,.doc,.docx"/>
+        <button class="attach-btn" (click)="fileInput.click()">Attach</button>
+
+        <input type="text" [(ngModel)]="userInput"
+               (keyup.enter)="sendMessage()"
+               placeholder="Type your message or upload a file..."
+               class="message-input"/>
+
+        <button class="send-btn" (click)="sendMessage()" [disabled]="!userInput.trim()">Send</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div #invoiceTemplate style="display:none;">
+  <div class="row expanded">
+    <main class="columns">
+      <div class="inner-container">
+        <section class="row">
+          <div class="callout large invoice-container">
+            <table class="invoice" style="width: 100%;">
+              <tr class="header">
+                <td class="">
+                  <img ngSrc="/assets/logo/logoInvoice.png" alt="Company Logo" style="max-width: 100px;" height="512"
+                       width="112"/>
+                </td>
+                <td class="align-right">
+                  <h2>Invoice</h2>
+                </td>
+              </tr>
+
+              <tr class="intro">
+                <td class="">
+                  Hello, **{{ currentInvoiceData?.buyerName || 'Valued Customer' }}**.<br>
+                  Thank you for your order.
+                </td>
+                <td class="text-right">
+                  <span class="num">Order #{{ currentInvoiceData?.invoiceRef || 'N/A' }}</span><br>
+                  {{ currentInvoiceData?.invoiceDate | date:'mediumDate' }}
+                </td>
+              </tr>
+
+              <tr class="details">
+                <td colspan="2">
+                  <table style="width: 100%;">
+                    <thead>
+                    <tr>
+                      <th class="desc" style="width: 45%;">Item Description</th>
+                      <th class="id" style="width: 20%; text-align: center;">Ref / ID</th>
+                      <th class="qty" style="width: 15%; text-align: center;">Quantity</th>
+                      <th class="amt" style="width: 20%; text-align: right;">Subtotal</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr class="item" *ngFor="let item of currentInvoiceData?.items">
+                      <td class="desc">{{ item.name }}</td>
+                      <td class="id num" style="text-align: center;">{{ item.ref || 'N/A' }}</td>
+                      <td class="qty" style="text-align: center;">{{ item.qty }}</td>
+                      <td class="amt" style="text-align: right;">{{ item.qty * item.price | currency:'EUR':'symbol':'1.2-2' }}</td>
+                    </tr>
+                    <tr class="item" *ngIf="!currentInvoiceData?.items || currentInvoiceData?.items?.length === 0">
+                      <td class="desc" colspan="4" style="text-align: center;">No items parsed from OCR.</td>
+                    </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+
+              <tr class="totals">
+                <td></td>
+                <td>
+                  <table style="width: 100%;">
+                    <tr class="subtotal">
+                      <td class="num">Subtotal</td>
+                      <td class="num">{{ currentInvoiceData?.subTotal | currency:'EUR':'symbol':'1.2-2' }}</td>
+                    </tr>
+                    <tr class="fees">
+                      <td class="num">Shipping & Handling</td>
+                      <td class="num">{{ 0 | currency:'EUR':'symbol':'1.2-2' }}</td>
+                    </tr>
+                    <tr class="tax">
+                      <td class="num">Tax (VAT)</td>
+                      <td class="num">{{ currentInvoiceData?.tax | currency:'EUR':'symbol':'1.2-2' }}</td>
+                    </tr>
+                    <tr class="total">
+                      <td>Total Due</td>
+                      <td>{{ currentInvoiceData?.total | currency:'EUR':'symbol':'1.2-2' }}</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <section class="additional-info">
+              <div class="row">
+                <div class="columns">
+                  <h5>Billing Information (Parsed)</h5>
+                  <p>
+                    {{ currentInvoiceData?.buyerName || 'N/A' }}<br>
+                    123 OCR Lane<br>
+                    Anytown, ZZ 00000<br>
+                    Earth
+                  </p>
+                </div>
+                <div class="columns">
+                  <h5>Payment Information</h5>
+                  <p>Payment Due: Upon Receipt</p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>

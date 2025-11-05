@@ -1,59 +1,77 @@
-# ChatBotAI
+Chatbot d'Analyse de Facture (Angular)
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.1.
+Ce projet est une application web Angular simulant un chatbot capable d'analyser des données de facture à partir de texte et de générer un aperçu PDF de la facture.
 
-## Development server
+🚀 Démarrage Rapide avec Docker Compose
 
-To start a local development server, run:
+Pour exécuter cette application de manière isolée sans avoir à installer Node.js ou Angular CLI localement, utilisez Docker et Docker Compose.
 
-```bash
+Prérequis
+
+Assurez-vous d'avoir installé sur votre machine :
+
+Docker (inclut le Docker Engine et Docker CLI).
+
+Docker Compose (souvent inclus avec les versions modernes de Docker Desktop).
+
+⚙️ Configuration du Projet
+
+Cloner le dépôt :
+
+git clone 
+cd 
+
+
+Fichiers Docker : Assurez-vous que les fichiers suivants existent à la racine de votre projet :
+
+Dockerfile (Contient les étapes de build pour l'application Angular).
+
+docker-compose.yml (Définit le service et le port d'exposition).
+
+🏃 Exécuter l'Application
+
+Utilisez la commande suivante pour construire l'image Docker de l'application Angular et démarrer le conteneur.
+
+# L'option --build est nécessaire lors de la première exécution
+# ou après des modifications du code source Angular.
+docker-compose up --build
+
+
+Commandes Utiles
+
+Démarrer en arrière-plan :
+
+docker-compose up -d
+
+
+Arrêter l'application :
+
+docker-compose down
+
+
+🌐 Accéder à l'Application
+
+L'application sera disponible dans votre navigateur à l'adresse suivante :
+
+http://localhost:4200
+
+
+Si ce port est déjà utilisé, Docker le mappera à un autre port. Vérifiez les logs de docker-compose up pour l'URL exacte.
+
+🛠️ Développement Local (Sans Docker)
+
+Si vous souhaitez développer l'application localement, suivez ces étapes :
+
+Installez Node.js (version 18+ recommandée) et npm.
+
+Installez les dépendances :
+
+npm install
+
+
+Lancez le serveur de développement :
+
 ng serve
-```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+L'application se lancera également sur http://localhost:4200/.
