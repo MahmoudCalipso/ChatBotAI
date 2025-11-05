@@ -18,8 +18,8 @@ Docker Compose (souvent inclus avec les versions modernes de Docker Desktop).
 
 Cloner le dépôt :
 
-git clone 
-cd 
+gh repo clone MahmoudCalipso/ChatBotAIit
+cd ChatBotAIit
 
 
 Fichiers Docker : Assurez-vous que les fichiers suivants existent à la racine de votre projet :
