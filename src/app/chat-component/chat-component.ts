@@ -6,7 +6,7 @@ import { ChatSession } from '../../Models/chat-session';
 import { OcrService } from '../../Services/ocr-service';
 import { StorageService } from '../../Services/storage-service';
 import { SanitizePipe } from '../../Pipes/sanitize.pipe';
-import {InvoiceData, InvoiceItem} from '../../Models/Invoice';
+import {BankInfo, ClientInfo, InvoiceData, InvoiceItem, VendorInfo} from '../../Models/Invoice';
 import {ProductDatabaseService} from '../../Services/product-database-service';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -152,7 +152,7 @@ export class ChatComponent implements OnInit {
     // --- Réponse standard ---
     const botMsg: Message = {
       id: this.storage.newId(),
-      text: 'Merci ! Si vous appliquez votre Data, je vous informerai pour obtenir votre document. Merci de taper [donner la facture\',\n' +
+      text: 'Merci ! Si vous appliquez votre Data, je vous informerai pour obtenir votre document. Merci de taper [\n' +
         '      \'Can you give me the invoice ?\n' +
         '      \'generate my pdf facture,\n' +
         '     ] . Ensuite, je vous transmets ton résultat.' +
@@ -353,9 +353,9 @@ export class ChatComponent implements OnInit {
 
 
   parseInvoiceData(ocrText: string): InvoiceData {
-    console.log('🔍 Starting deep OCR analysis...');
+    console.log('🔍 Starting deep OCR analysis with vendor/client/bank parsing...');
 
-    // --- Helper Functions ---
+    // === Helper Functions ===
     const cleanNumber = (text: string): number => {
       const cleaned = text.replace(/[^\d.,]/g, '').replace(',', '.');
       const num = parseFloat(cleaned);
@@ -382,43 +382,114 @@ export class ChatComponent implements OnInit {
       return 0;
     };
 
-    // --- Extraction des Entêtes ---
+    // === Core Fields ===
     const buyerName = extractString([
-      /Nom\s*:\s*([A-Z][A-Za-z\s]+?)(?:\n|$)/i,
-      /(?:Billed?\s*To|Client)\s*:?\s*([A-Z][A-Za-z\s]+?)(?:\n|$)/i
+      /Client\s*:?[\s\n]*([A-Z][A-Za-z\s\-\']+)/i,
+      /Nom\s*:?[\s\n]*([A-Z][A-Za-z\s\-\']+)/i,
+      /Billed?\s*To\s*:?[\s\n]*([A-Z][A-Za-z\s\-\']+)/i
     ]);
-    const total = extractNumber([/(?:Prix total|Total)\s*:?\s*\$?\s*([\d\.,]+)/i]);
-    const pricePerUnit = extractNumber([/Prix par pièce\s*:?\s*([\d\.,]+)/i]);
-    const tax = extractNumber([/(?:Tax|TVA)\s*:?\s*\$?\s*([\d\.,]+)/i]);
 
-    // Date: Utilisation d'un pattern simple pour la date
-    const dateStr = extractString([/Date de livifsayon\s*:?\s*(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4})/i]);
+    const total = extractNumber([/(?:Total\s*(?:TTC)?|Prix total)\s*:?\s*([\d\.,]+)/i]);
+    const tax = extractNumber([/(?:TVA|Tax)\s*:?\s*([\d\.,]+)/i]);
+    const pricePerUnit = extractNumber([/Prix\s*(?:unitaire|par pièce)\s*:?\s*([\d\.,]+)/i]);
+
+    const dateStr = extractString([
+      /Date\s*(?:de facturation|de livraison)?\s*:?\s*(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4})/i
+    ]);
     const invoiceDate = dateStr !== 'N/A' ? new Date(dateStr) : new Date();
 
-    // ===================================================================
-    // 🎯 LOGIQUE D'EXTRACTION D'ARTICLES (Basée sur l'exemple "Marie Martin")
-    // ===================================================================
+    // === Vendor Info Extraction ===
+    const vendorInfo: VendorInfo = {
+      name: extractString([
+        /Vendeur\s*:?[\s\n]*(.+)/i,
+        /Société\s*:?[\s\n]*(.+)/i
+      ]),
+      address: extractString([
+        /Adresse\s*:?[\s\n]*(.+)/i
+      ]),
+      city: extractString([
+        /(?:Ville|Code postal)\s*:?[\s\n]*(.+)/i
+      ]),
+      siret: extractString([
+        /SIRET\s*:?[\s\n]*([0-9\s]+)/i
+      ]),
+      tva: extractString([
+        /TVA\s*(?:Intra)?\s*:?[\s\n]*([A-Z0-9\s]+)/i
+      ]),
+      phone: extractString([
+        /Téléphone\s*:?[\s\n]*([\+0-9\s\.]+)/i,
+        /Tel\s*:?[\s\n]*([\+0-9\s\.]+)/i
+      ]),
+      email: extractString([
+        /E[- ]?mail\s*:?[\s\n]*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,})/i
+      ]),
+      website: extractString([
+        /(?:Site|Website)\s*:?[\s\n]*(https?:\/\/[^\s]+)/i,
+        /(?:Site|Website)\s*:?[\s\n]*([A-Za-z0-9\.\-]+\.[a-z]{2,})/i
+      ])
+    };
 
+    // === Client Info Extraction ===
+    const clientInfo: ClientInfo = {
+      address: extractString([
+        /Adresse client\s*:?[\s\n]*(.+)/i,
+        /Adresse\s*:?[\s\n]*(.+)/i
+      ]),
+      city: extractString([
+        /Ville client\s*:?[\s\n]*(.+)/i,
+        /(?:Code postal|Ville)\s*:?[\s\n]*(.+)/i
+      ])
+    };
+
+    // === Bank Info Extraction ===
+    const bankInfo: BankInfo = {
+      bank: extractString([
+        /Banque\s*:?[\s\n]*(.+)/i
+      ]),
+      iban: extractString([
+        /IBAN\s*:?[\s\n]*([A-Z0-9\s]+)/i
+      ]),
+      bic: extractString([
+        /(?:BIC|SWIFT)\s*:?[\s\n]*([A-Z0-9]+)/i
+      ])
+    };
+    // === Additional Metadata Extraction ===
+    const dueDateStr = extractString([
+      /Échéance\s*:?\s*(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4})/i,
+      /Due\s*Date\s*:?\s*(\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4})/i
+    ]);
+    const dueDate = dueDateStr !== 'N/A' ? new Date(dueDateStr) : undefined;
+
+    const paymentTerms = extractString([
+      /Conditions?\s*de\s*paiement\s*:?\s*([A-Za-z0-9\s]+)/i,
+      /Paiement\s*:?\s*([A-Za-z0-9\s]+)/i,
+      /Payment\s*Terms\s*:?\s*([A-Za-z0-9\s]+)/i
+    ]);
+    const reference = extractString([
+      /Référence\s*:?\s*([A-Z0-9\-]+)/i,
+      /Ref\.?\s*:?\s*([A-Z0-9\-]+)/i
+    ]);
+    const additionalInfo = extractString([
+      /Informations?\s*additionnelles?\s*:?\s*([\s\S]+)/i,
+      /Notes?\s*:?\s*([\s\S]+)/i
+    ]);
+
+    // === Item Extraction Logic ===
     const items: InvoiceItem[] = [];
     const commandLine = extractString([/Commande\s*:?\s*(.*)/i]);
 
     if (commandLine !== 'N/A') {
-      // Extrait la quantité totale et le nom du produit principal
       const baseMatch = commandLine.match(/(\d+)\s*([a-zA-Z0-9\s]+?)(?:,|$)/);
-
       if (baseMatch) {
         const totalQty = parseInt(baseMatch[1]);
         const baseProduct = baseMatch[2].trim();
-        const match = this.productDb.findBestMatch(baseProduct, 0.6); // Utilisation du ProductDB
+        const match = this.productDb.findBestMatch(baseProduct, 0.6);
 
-        // Tente d'extraire les détails de couleur/quantité
         const colorDetailsMatch = commandLine.match(/couleurs\s*:?\s*(.*)/i);
-
         if (colorDetailsMatch && colorDetailsMatch[1].length > 0) {
           const colors = colorDetailsMatch[1].split(',').map(s => s.trim());
-
           for (const detail of colors) {
-            const detailMatch = detail.match(/(\d+)\s*([a-zA-Z\s]+)/); // Ex: 1 noir
+            const detailMatch = detail.match(/(\d+)\s*([a-zA-Z\s]+)/);
             if (detailMatch) {
               const qty = parseInt(detailMatch[1]);
               const color = detailMatch[2].trim();
@@ -434,7 +505,6 @@ export class ChatComponent implements OnInit {
             }
           }
         } else {
-          // Si pas de détail de couleur, ajouter l'article unique
           items.push({
             name: baseProduct,
             ref: this.generateRef(match?.category),
@@ -447,23 +517,29 @@ export class ChatComponent implements OnInit {
       }
     }
 
-    // --- Calculs de Validation ---
+    // === Totals ===
     const calculatedSubTotal = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
     const calculatedTax = tax;
     const calculatedTotal = calculatedSubTotal + calculatedTax;
 
     const result: InvoiceData = {
       buyerName: buyerName || 'Unknown Customer',
-      invoiceRef: extractString([/Order #([A-Z0-9\-]+)/i]) || `INV-${Date.now()}`,
+      invoiceRef: extractString([/Facture\s*(?:n°|numéro)?\s*:?[\s\n]*([A-Z0-9\-]+)/i]) || `INV-${Date.now()}`,
       invoiceDate: invoiceDate,
       subTotal: calculatedSubTotal,
       tax: calculatedTax,
-      // Utilise le total extrait si non nul, sinon le total calculé
       total: total > 0 ? total : calculatedTotal,
-      items: items.filter(item => item.price > 0 && item.qty > 0)
+      items: items.filter(item => item.price > 0 && item.qty > 0),
+      vendorInfo,
+      clientInfo,
+      bankInfo,
+      dueDate,
+      paymentTerms: paymentTerms !== 'N/A' ? paymentTerms : 'À réception',
+      reference: reference !== 'N/A' ? reference : '',
+      additionalInfo: additionalInfo !== 'N/A' ? additionalInfo : ''
     };
 
-    console.log('✅ Parsed invoice data:', result);
+    console.log('✅ Parsed full invoice data:', result);
     return result;
   }
 

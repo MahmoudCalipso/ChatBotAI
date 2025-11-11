@@ -91,105 +91,266 @@
   </main>
 </div>
 
-<div #invoiceTemplate style="display:none;">
-  <div class="row expanded">
-    <main class="columns">
-      <div class="inner-container">
-        <section class="row">
-          <div class="callout large invoice-container">
-            <table class="invoice" style="width: 100%;">
-              <tr class="header">
-                <td class="">
-                  <img ngSrc="/assets/logo/logoInvoice.png" alt="Company Logo" style="max-width: 100px;" height="512"
-                       width="112"/>
-                </td>
-                <td class="align-right">
-                  <h2>Invoice</h2>
-                </td>
-              </tr>
+<!--<div #invoiceTemplate style="display:none;">-->
+<!--  <div class="row expanded">-->
+<!--    <main class="columns">-->
+<!--      <div class="inner-container">-->
+<!--        <section class="row">-->
+<!--          <div class="callout large invoice-container">-->
+<!--            <table class="invoice" style="width: 100%;">-->
+<!--              <tr class="header">-->
+<!--                <td class="">-->
+<!--                  <img ngSrc="/assets/logo/logoInvoice.png" alt="Company Logo" style="max-width: 100px;" height="512"-->
+<!--                       width="112"/>-->
+<!--                </td>-->
+<!--                <td class="align-right">-->
+<!--                  <h2>Invoice</h2>-->
+<!--                </td>-->
+<!--              </tr>-->
 
-              <tr class="intro">
-                <td class="">
-                  Hello, **{{ currentInvoiceData?.buyerName || 'Valued Customer' }}**.<br>
-                  Thank you for your order.
-                </td>
-                <td class="text-right">
-                  <span class="num">Order #{{ currentInvoiceData?.invoiceRef || 'N/A' }}</span><br>
-                  {{ currentInvoiceData?.invoiceDate | date:'mediumDate' }}
-                </td>
-              </tr>
+<!--              <tr class="intro">-->
+<!--                <td class="">-->
+<!--                  Hello, **{{ currentInvoiceData?.buyerName || 'Valued Customer' }}**.<br>-->
+<!--                  Thank you for your order.-->
+<!--                </td>-->
+<!--                <td class="text-right">-->
+<!--                  <span class="num">Order #{{ currentInvoiceData?.invoiceRef || 'N/A' }}</span><br>-->
+<!--                  {{ currentInvoiceData?.invoiceDate | date:'mediumDate' }}-->
+<!--                </td>-->
+<!--              </tr>-->
 
-              <tr class="details">
-                <td colspan="2">
-                  <table style="width: 100%;">
-                    <thead>
-                    <tr>
-                      <th class="desc" style="width: 45%;">Item Description</th>
-                      <th class="id" style="width: 20%; text-align: center;">Ref / ID</th>
-                      <th class="qty" style="width: 15%; text-align: center;">Quantity</th>
-                      <th class="amt" style="width: 20%; text-align: right;">Subtotal</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr class="item" *ngFor="let item of currentInvoiceData?.items">
-                      <td class="desc">{{ item.name }}</td>
-                      <td class="id num" style="text-align: center;">{{ item.ref || 'N/A' }}</td>
-                      <td class="qty" style="text-align: center;">{{ item.qty }}</td>
-                      <td class="amt" style="text-align: right;">{{ item.qty * item.price | currency:'EUR':'symbol':'1.2-2' }}</td>
-                    </tr>
-                    <tr class="item" *ngIf="!currentInvoiceData?.items || currentInvoiceData?.items?.length === 0">
-                      <td class="desc" colspan="4" style="text-align: center;">No items parsed from OCR.</td>
-                    </tr>
-                    </tbody>
-                  </table>
-                </td>
-              </tr>
+<!--              <tr class="details">-->
+<!--                <td colspan="2">-->
+<!--                  <table style="width: 100%;">-->
+<!--                    <thead>-->
+<!--                    <tr>-->
+<!--                      <th class="desc" style="width: 45%;">Item Description</th>-->
+<!--                      <th class="id" style="width: 20%; text-align: center;">Ref / ID</th>-->
+<!--                      <th class="qty" style="width: 15%; text-align: center;">Quantity</th>-->
+<!--                      <th class="amt" style="width: 20%; text-align: right;">Subtotal</th>-->
+<!--                    </tr>-->
+<!--                    </thead>-->
+<!--                    <tbody>-->
+<!--                    <tr class="item" *ngFor="let item of currentInvoiceData?.items">-->
+<!--                      <td class="desc">{{ item.name }}</td>-->
+<!--                      <td class="id num" style="text-align: center;">{{ item.ref || 'N/A' }}</td>-->
+<!--                      <td class="qty" style="text-align: center;">{{ item.qty }}</td>-->
+<!--                      <td class="amt" style="text-align: right;">{{ item.qty * item.price | currency:'EUR':'symbol':'1.2-2' }}</td>-->
+<!--                    </tr>-->
+<!--                    <tr class="item" *ngIf="!currentInvoiceData?.items || currentInvoiceData?.items?.length === 0">-->
+<!--                      <td class="desc" colspan="4" style="text-align: center;">No items parsed from OCR.</td>-->
+<!--                    </tr>-->
+<!--                    </tbody>-->
+<!--                  </table>-->
+<!--                </td>-->
+<!--              </tr>-->
 
-              <tr class="totals">
-                <td></td>
-                <td>
-                  <table style="width: 100%;">
-                    <tr class="subtotal">
-                      <td class="num">Subtotal</td>
-                      <td class="num">{{ currentInvoiceData?.subTotal | currency:'EUR':'symbol':'1.2-2' }}</td>
-                    </tr>
-                    <tr class="fees">
-                      <td class="num">Shipping & Handling</td>
-                      <td class="num">{{ 0 | currency:'EUR':'symbol':'1.2-2' }}</td>
-                    </tr>
-                    <tr class="tax">
-                      <td class="num">Tax (VAT)</td>
-                      <td class="num">{{ currentInvoiceData?.tax | currency:'EUR':'symbol':'1.2-2' }}</td>
-                    </tr>
-                    <tr class="total">
-                      <td>Total Due</td>
-                      <td>{{ currentInvoiceData?.total | currency:'EUR':'symbol':'1.2-2' }}</td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
+<!--              <tr class="totals">-->
+<!--                <td></td>-->
+<!--                <td>-->
+<!--                  <table style="width: 100%;">-->
+<!--                    <tr class="subtotal">-->
+<!--                      <td class="num">Subtotal</td>-->
+<!--                      <td class="num">{{ currentInvoiceData?.subTotal | currency:'EUR':'symbol':'1.2-2' }}</td>-->
+<!--                    </tr>-->
+<!--                    <tr class="fees">-->
+<!--                      <td class="num">Shipping & Handling</td>-->
+<!--                      <td class="num">{{ 0 | currency:'EUR':'symbol':'1.2-2' }}</td>-->
+<!--                    </tr>-->
+<!--                    <tr class="tax">-->
+<!--                      <td class="num">Tax (VAT)</td>-->
+<!--                      <td class="num">{{ currentInvoiceData?.tax | currency:'EUR':'symbol':'1.2-2' }}</td>-->
+<!--                    </tr>-->
+<!--                    <tr class="total">-->
+<!--                      <td>Total Due</td>-->
+<!--                      <td>{{ currentInvoiceData?.total | currency:'EUR':'symbol':'1.2-2' }}</td>-->
+<!--                    </tr>-->
+<!--                  </table>-->
+<!--                </td>-->
+<!--              </tr>-->
+<!--            </table>-->
 
-            <section class="additional-info">
-              <div class="row">
-                <div class="columns">
-                  <h5>Billing Information (Parsed)</h5>
-                  <p>
-                    {{ currentInvoiceData?.buyerName || 'N/A' }}<br>
-                    123 OCR Lane<br>
-                    Anytown, ZZ 00000<br>
-                    Earth
-                  </p>
-                </div>
-                <div class="columns">
-                  <h5>Payment Information</h5>
-                  <p>Payment Due: Upon Receipt</p>
-                </div>
-              </div>
-            </section>
-          </div>
-        </section>
+<!--            <section class="additional-info">-->
+<!--              <div class="row">-->
+<!--                <div class="columns">-->
+<!--                  <h5>Billing Information (Parsed)</h5>-->
+<!--                  <p>-->
+<!--                    {{ currentInvoiceData?.buyerName || 'N/A' }}<br>-->
+<!--                    123 OCR Lane<br>-->
+<!--                    Anytown, ZZ 00000<br>-->
+<!--                    Earth-->
+<!--                  </p>-->
+<!--                </div>-->
+<!--                <div class="columns">-->
+<!--                  <h5>Payment Information</h5>-->
+<!--                  <p>Payment Due: Upon Receipt</p>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </section>-->
+<!--          </div>-->
+<!--        </section>-->
+<!--      </div>-->
+<!--    </main>-->
+<!--  </div>-->
+<!--</div>-->
+
+<div style="position: absolute; left: -9999px; top: 0;">
+  <div #invoiceTemplate class="invoice-document">
+    <div class="invoice-page">
+
+      <!-- Header -->
+      <div class="invoice-header">
+        <h1 class="invoice-title">Facture</h1>
+        <div class="logo-placeholder">
+          <span>Logo</span>
+        </div>
       </div>
-    </main>
+
+      <!-- Vendor and Client Information -->
+      <div class="info-section">
+        <div class="info-block">
+          <div class="info-label">Vendeur</div>
+          <div class="info-content">
+            <strong>{{ currentInvoiceData?.vendorInfo?.name }}</strong><br>
+            {{ currentInvoiceData?.vendorInfo?.address }}<br>
+            {{ currentInvoiceData?.vendorInfo?.city }}
+          </div>
+        </div>
+
+        <div class="info-block">
+          <div class="info-label">Client</div>
+          <div class="info-content">
+            <strong>{{ currentInvoiceData?.buyerName }}</strong><br>
+            {{ currentInvoiceData?.clientInfo?.address }}<br>
+            {{ currentInvoiceData?.clientInfo?.city }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Invoice Metadata -->
+      <div class="metadata-section">
+        <div class="metadata-item">
+          <div class="metadata-label">Date de facturation</div>
+          <div class="metadata-value">
+            {{ currentInvoiceData?.invoiceDate | date:'d.M.yyyy' }}
+          </div>
+        </div>
+        <div class="metadata-item">
+          <div class="metadata-label">Numéro de facture</div>
+          <div class="metadata-value">{{ currentInvoiceData?.invoiceRef }}</div>
+        </div>
+        <div class="metadata-item">
+          <div class="metadata-label">Échéance</div>
+          <div class="metadata-value"> {{ currentInvoiceData?.dueDate ? (currentInvoiceData?.dueDate | date:'d.M.yyyy') : '—' }}</div>
+        </div>
+        <div class="metadata-item">
+          <div class="metadata-label">Paiement</div>
+          <div class="metadata-value">{{ currentInvoiceData?.paymentTerms || 'À réception' }}</div>
+        </div>
+        <div class="metadata-item">
+          <div class="metadata-label">Référence</div>
+          <div class="metadata-value"> {{ currentInvoiceData?.reference || '—' }}</div>
+        </div>
+      </div>
+
+      <!-- Additional Information -->
+      <div class="additional-info" *ngIf="currentInvoiceData?.additionalInfo">
+        <strong>Informations additionnelles :</strong><br>
+         {{ currentInvoiceData?.additionalInfo }}
+      </div>
+
+      <div class="separator"></div>
+
+      <!-- Items Table -->
+      <table class="items-table">
+        <thead>
+        <tr>
+          <th class="col-description"> Description </th>
+            <th class="col-quantity">Quantité</th>
+            <th class="col-unit">Unité</th>
+            <th class="col-price">Prix unitaire HT</th>
+            <th class="col-tva">% TVA</th>
+            <th class="col-total">Total TVA</th>
+            <th class="col-total">Total TTC</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let item of currentInvoiceData?.items" class="item-row">
+          <td class="col-description">{{ item?.name }}</td>
+          <td class="col-quantity">{{ item?.qty }}</td>
+          <td class="col-unit">{{ item?.unit ? item.unit : 'pcs' }}</td>
+          <td class="col-price">
+            {{ item?.price ? (item.price | number:'1.2-2') + ' €' : '0.00 €' }}
+          </td>
+          <td class="col-tva">{{ item?.taxRate ? item.taxRate : 20 }} %</td>
+          <td class="col-total">
+            {{
+              item?.price && item?.qty
+                ? (item.price * item.qty * ((item.taxRate || 20) / 100) | number:'1.2-2') + ' €'
+                : '0.00 €'
+            }}
+          </td>
+          <td class="col-total">
+            {{
+              item?.price && item?.qty
+                ? ((item.price * item.qty) * (1 + ((item.taxRate || 20) / 100)) | number:'1.2-2') + ' €'
+                : '0.00 €'
+            }}
+          </td>
+        </tr>
+
+
+        </tbody>
+      </table>
+
+      <!-- Totals Section -->
+      <div class="totals-section">
+        <div class="totals-row">
+          <div class="totals-label">Total HT</div>
+          <div class="totals-value">
+            {{ currentInvoiceData?.subTotal | number:'1.2-2' }} €
+          </div>
+        </div>
+        <div class="totals-row">
+          <div class="totals-label">Total TVA</div>
+          <div class="totals-value">
+            {{ currentInvoiceData?.tax | number:'1.2-2' }} €
+          </div>
+        </div>
+        <div class="totals-row totals-final">
+          <div class="totals-label">Total TTC</div>
+          <div class="totals-value">
+            {{ currentInvoiceData?.total | number:'1.2-2' }} €
+          </div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <!-- Footer Information -->
+      <div class="footer-section">
+        <div class="footer-column">
+          <strong>{{ currentInvoiceData?.vendorInfo?.name }}</strong><br>
+          {{ currentInvoiceData?.vendorInfo?.address }}<br>
+          {{ currentInvoiceData?.vendorInfo?.city }}<br>
+          N° Siren ou Siret : {{ currentInvoiceData?.vendorInfo?.siret }}<br>
+          N° TVA Intra. : {{ currentInvoiceData?.vendorInfo?.tva }}
+        </div>
+
+        <div class="footer-column">
+          <strong>Coordonnées</strong><br>
+          Téléphone : {{ currentInvoiceData?.vendorInfo?.phone }}<br>
+          E-mail : {{ currentInvoiceData?.vendorInfo?.email }}<br>
+          <span class="website">{{ currentInvoiceData?.vendorInfo?.website }}</span>
+        </div>
+
+        <div class="footer-column">
+          <strong>Détails bancaires</strong><br>
+          Banque : {{ currentInvoiceData?.bankInfo?.bank }}<br>
+          IBAN : {{ currentInvoiceData?.bankInfo?.iban }}<br>
+          BIC/Swift : {{ currentInvoiceData?.bankInfo?.bic }}
+        </div>
+      </div>
+    </div>
   </div>
 </div>
